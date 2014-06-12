@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     ivec2 size = image->GetSize();
     uint8_t *data = image->GetData();
 
-    image->Save("output.bmp");
+    image->Save("output.jpeg");
 
     Image::Destroy(image);
 
