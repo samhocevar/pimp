@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     image->Save("output.jpeg");
 
-    Image::Destroy(image);
+    image->Destroy();
 
     return 0;
 }
