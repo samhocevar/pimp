@@ -20,18 +20,22 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
+    /* Load image */
     Image image;
     image.Load("input.jpeg");
-    ivec2 size = image.GetSize();
-    u8vec4 *data = image.Lock<PixelFormat::RGBA_8>();
+
+    /* Copy image to another variable */
+    Image other = image;
+    ivec2 size = other.GetSize();
+    u8vec4 *data = other.Lock<PixelFormat::RGBA_8>();
 
     for (int n = 0; n < size.x * size.y; ++n)
     {
         data[n] = data[n].bgra;
     }
 
-    image.Unlock();
-    image.Save("output.jpeg");
+    other.Unlock(data);
+    other.Save("output.jpeg");
 
     return 0;
 }
