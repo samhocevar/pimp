@@ -20,10 +20,17 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
+    /* Test lock */
+    Image tmp;
+    tmp.SetSize(ivec2(256, 256));
+    u8vec4 *p = tmp.Lock<PixelFormat::RGBA_8>();
+    tmp.Unlock();
+
     Image *image = Image::Create("input.jpeg");
 
     ivec2 size = image->GetSize();
-    uint8_t *data = image->GetData();
+    u8vec4 *data = image->Lock<PixelFormat::RGBA_8>();
+    image->Unlock();
 
     image->Save("output.jpeg");
 
