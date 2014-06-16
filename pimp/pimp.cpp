@@ -20,21 +20,18 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
-    /* Test lock */
-    Image tmp;
-    tmp.SetSize(ivec2(256, 256));
-    u8vec4 *p = tmp.Lock<PixelFormat::RGBA_8>();
-    tmp.Unlock();
+    Image image;
+    image.Load("input.jpeg");
+    ivec2 size = image.GetSize();
+    u8vec4 *data = image.Lock<PixelFormat::RGBA_8>();
 
-    Image *image = Image::Create("input.jpeg");
+    for (int n = 0; n < size.x * size.y; ++n)
+    {
+        data[n] = data[n].bgra;
+    }
 
-    ivec2 size = image->GetSize();
-    u8vec4 *data = image->Lock<PixelFormat::RGBA_8>();
-    image->Unlock();
-
-    image->Save("output.jpeg");
-
-    image->Destroy();
+    image.Unlock();
+    image.Save("output.jpeg");
 
     return 0;
 }
