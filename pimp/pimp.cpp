@@ -35,7 +35,14 @@ int main(int argc, char **argv)
     }
 
     other.Unlock(data);
-    other.Save("output.jpeg");
+    other.Save("output1.jpeg");
+
+    /* More tests */
+    Image tmp;
+    tmp.RenderHalftone(ivec2(128, 128));
+    // FIXME: this should not be necessary
+    tmp.SetFormat(PixelFormat::RGBA_F32);
+    tmp.Save("output2.jpeg");
 
     return 0;
 }
