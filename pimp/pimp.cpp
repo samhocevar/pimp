@@ -27,19 +27,20 @@ int main(int argc, char **argv)
     /* Copy image to another variable */
     Image other = image;
     ivec2 size = other.GetSize();
-    u8vec4 *data = other.Lock<PixelFormat::RGBA_8>();
 
+    u8vec4 *data = other.Lock<PixelFormat::RGBA_8>();
     for (int n = 0; n < size.x * size.y; ++n)
     {
         data[n] = data[n].bgra;
     }
-
     other.Unlock(data);
+
+    other = other.AutoContrast();
     other.Save("output1.jpeg");
 
     /* More tests */
     Image tmp;
-    tmp.RenderHalftone(ivec2(128, 128));
+    tmp.RenderRandom(ivec2(256, 256));
     // FIXME: this should not be necessary
     tmp.SetFormat(PixelFormat::RGBA_F32);
     tmp.Save("output2.jpeg");
