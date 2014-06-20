@@ -34,16 +34,12 @@ void DoSomeSeriousShit(Image &image)
     other.Unlock(data);
 
     /* Convolution */
-    Array2D<float> kernel = Image::HalftoneKernel(ivec2(2, 2));
-    other = other.Convolution(kernel);
-
+    other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
     other.Save("output1.jpeg");
 
     /* Dither to black and white */
-    //Image kernel;
-    //kernel.Stock("ediff:jajuni");
-    //other = other.DitherEdiff(kernel, ScanMode::Serpentine);
-    other = other.DitherOstromoukhov(ScanMode::Serpentine);
+    //other = other.DitherOstromoukhov(ScanMode::Serpentine);
+    other = other.DitherEdiff(Image::EdiffKernel(EdiffAlgorithm::Stucki), ScanMode::Serpentine);
     other.Save("output2.jpeg");
 
 #if 0
