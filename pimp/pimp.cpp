@@ -34,10 +34,7 @@ void DoSomeSeriousShit(Image &image)
     other.Unlock(data);
 
     /* Convolution */
-    Array2D<float> kernel(3, 3);
-    kernel[0][0] = -3; kernel[1][0] = -5; kernel[2][0] = -3;
-    kernel[0][1] = 0;  kernel[1][1] = 0;  kernel[2][1] = 0;
-    kernel[0][2] = 3;  kernel[1][2] = 5;  kernel[2][2] = 3;
+    Array2D<float> kernel = Image::HalftoneKernel(ivec2(2, 2));
     other = other.Convolution(kernel);
 
     other.Save("output1.jpeg");
