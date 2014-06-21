@@ -37,8 +37,8 @@ void DoSomeSeriousShit(Image &image)
 
     /* Convolution */
     //other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
-    //other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f), radians(22.f), vec2(0.f)));
-    other = other.Median(ivec2(4, 4));
+    other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f)));
+    //other = other.Median(ivec2(4, 4));
     other.Save("output1.jpeg");
 
     /* Dither to black and white */
@@ -75,8 +75,18 @@ void DoSomeSeriousShit(Image &image)
 
     /* More tests */
     Image tmp;
-    tmp.RenderRandom(ivec2(256, 256));
-    tmp = tmp.Median(ivec2(15, 15));
+    tmp.RenderRandom(ivec2(320, 320));
+    Array2D<float> ker = Image::GaussianKernel(vec2(6.f));
+    float mymax = 0.0f;
+    for (int j = 0; j < ker.GetSize().y; ++j)
+        for (int i = 0; i < ker.GetSize().x; ++i)
+            mymax = lol::max(ker[i][j], mymax);
+    for (int j = 0; j < ker.GetSize().y; ++j)
+        for (int i = 0; i < ker.GetSize().x; ++i)
+            ker[i][j] = ker[i][j] > mymax / 8.0f ? 1.f : 0.f;
+    tmp = tmp.Median(ker);
+    //tmp = tmp.Median(Image::GaussianKernel(vec2(6.f)));
+    //tmp = tmp.Median(Image::HalftoneKernel(ivec2(16, 16)));
     tmp = tmp.AutoContrast();
     tmp.Save("output3.jpeg");
 }
