@@ -39,7 +39,9 @@ void DoSomeSeriousShit(Image &image)
 
     /* Dither to black and white */
     //other = other.DitherOstromoukhov(ScanMode::Serpentine);
-    other = other.DitherEdiff(Image::EdiffKernel(EdiffAlgorithm::Stucki), ScanMode::Serpentine);
+    //other = other.DitherEdiff(Image::EdiffKernel(EdiffAlgorithm::Stucki), ScanMode::Serpentine);
+    other = other.DitherHalftone(20.f, lol::radians(22.f));
+    //other = other.DitherOrdered(Image::BayerKernel(ivec2(32, 32)));
     other.Save("output2.jpeg");
 
 #if 0
