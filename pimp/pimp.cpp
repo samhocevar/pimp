@@ -34,7 +34,8 @@ void DoSomeSeriousShit(Image &image)
     other.Unlock(data);
 
     /* Convolution */
-    other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
+    //other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
+    other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f), radians(22.f), vec2(0.f)));
     other.Save("output1.jpeg");
 
     /* Dither to black and white */
