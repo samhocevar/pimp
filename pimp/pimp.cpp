@@ -22,20 +22,23 @@ void DoSomeSeriousShit(Image &image)
     Image other = image;
     ivec2 size = other.GetSize();
 
+    /* Perform some per-pixel operations */
     u8vec4 *data = other.Lock<PixelFormat::RGBA_8>();
     for (int n = 0; n < size.x * size.y; ++n)
     {
-        /* Swap R and B */
-        data[n] = data[n].bgra;
-
         /* Reduce red value */
         data[n].r *= 0.9f;
     }
     other.Unlock(data);
 
+    /* Convert to YUV and back to RGB */
+    other = other.RGBToYUV();
+    other = other.YUVToRGB();
+
     /* Convolution */
     //other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
-    other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f), radians(22.f), vec2(0.f)));
+    //other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f), radians(22.f), vec2(0.f)));
+    other = other.Median(ivec2(4, 4));
     other.Save("output1.jpeg");
 
     /* Dither to black and white */
@@ -73,8 +76,8 @@ void DoSomeSeriousShit(Image &image)
     /* More tests */
     Image tmp;
     tmp.RenderRandom(ivec2(256, 256));
-    // FIXME: this should not be necessary
-    tmp.SetFormat(PixelFormat::RGBA_F32);
+    tmp = tmp.Median(ivec2(15, 15));
+    tmp = tmp.AutoContrast();
     tmp.Save("output3.jpeg");
 }
 
