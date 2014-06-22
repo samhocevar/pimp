@@ -35,10 +35,14 @@ void DoSomeSeriousShit(Image &image)
     other = other.RGBToYUV();
     other = other.YUVToRGB();
 
-    /* Convolution */
+    /* Filter */
     //other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
-    other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f)));
+    //other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f)));
     //other = other.Median(ivec2(4, 4));
+    //other = other.Brightness(0.5f);
+    //other = other.Threshold(0.3f);
+    //other = other.Erode().Erode().Erode().Erode();
+    other = other.Sharpen(Image::GaussianKernel(vec2(6.f, 0.5f)));
     other.Save("output1.jpeg");
 
     /* Dither to black and white */
@@ -76,7 +80,7 @@ void DoSomeSeriousShit(Image &image)
     /* More tests */
     Image tmp;
     tmp.RenderRandom(ivec2(320, 320));
-    Array2D<float> ker = Image::GaussianKernel(vec2(6.f));
+    Array2D<float> ker = Image::GaussianKernel(vec2(3.f));
     float mymax = 0.0f;
     for (int j = 0; j < ker.GetSize().y; ++j)
         for (int i = 0; i < ker.GetSize().x; ++i)
