@@ -104,6 +104,7 @@ int main(int argc, char **argv)
 
     Image image;
     image.Load("input.jpeg");
+    //image.Load("oric.tap");
     DoSomeSeriousShit(image);
 
     return 0;
