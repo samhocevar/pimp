@@ -96,6 +96,12 @@ void DoSomeSeriousShit(Image &image)
     //tmp = tmp.Median(Image::HalftoneKernel(ivec2(16, 16)));
     tmp = tmp.AutoContrast();
     tmp.Save("output3.jpeg");
+
+    /* Test Oric support */
+    tmp = tmp.Contrast(0.5f);
+    tmp.Save("oric.tap");
+    tmp.Load("oric.tap");
+    tmp.Save("oric.png");
 }
 
 int main(int argc, char **argv)
@@ -104,7 +110,7 @@ int main(int argc, char **argv)
 
     Image image;
     image.Load("input.jpeg");
-    //image.Load("oric.tap");
+
     DoSomeSeriousShit(image);
 
     return 0;
