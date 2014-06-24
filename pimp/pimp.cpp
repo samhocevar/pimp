@@ -48,11 +48,12 @@ void DoSomeSeriousShit(Image &image)
     /* Dither to black and white */
     //other = other.DitherOstromoukhov(ScanMode::Serpentine);
     //other = other.DitherEdiff(Image::EdiffKernel(EdiffAlgorithm::Stucki), ScanMode::Serpentine);
-    other = other.DitherHalftone(20.f, lol::radians(22.f));
+    //other = other.DitherHalftone(20.f, lol::radians(22.f));
     //other = other.Convolution(Image::GaussianKernel(vec2(1.f)));
     //other = other.Resize(ivec2(256, 320), ResampleAlgorithm::Bicubic);
     other = other.Resize(ivec2(320, 400), ResampleAlgorithm::Bresenham);
     //other = other.DitherOrdered(Image::BayerKernel(ivec2(32, 32)));
+    other = other.DitherDbs();
     other.Save("output2.jpeg");
 
 #if 0
