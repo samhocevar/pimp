@@ -23,16 +23,18 @@ void DoSomeSeriousShit(Image &image)
     ivec2 size = other.GetSize();
 
     /* Perform some per-pixel operations */
-    u8vec4 *data = other.Lock<PixelFormat::RGBA_8>();
-    for (int n = 0; n < size.x * size.y; ++n)
+    Array2D<u8vec4> &data = other.Lock2D<PixelFormat::RGBA_8>();
+    for (int y = 0; y < size.y; ++y)
+    for (int x = 0; x < size.x; ++x)
     {
         /* Reduce red value */
-        data[n].r *= 0.9f;
+        data[x][y].r *= 0.9f;
     }
-    other.Unlock(data);
+    other.Unlock2D(data);
 
     /* Convert to YUV and back to RGB */
     other = other.RGBToYUV();
+    other = other.Convolution(Image::GaussianKernel(vec2(2.f)));
     other = other.YUVToRGB();
 
     /* Filter */
