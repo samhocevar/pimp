@@ -55,7 +55,8 @@ void DoSomeSeriousShit(Image &image)
     //other = other.Resize(ivec2(256, 320), ResampleAlgorithm::Bicubic);
     other = other.Resize(ivec2(320, 400), ResampleAlgorithm::Bresenham);
     //other = other.DitherOrdered(Image::BayerKernel(ivec2(32, 32)));
-    other = other.DitherDbs();
+    Image dither = other.DitherDbs();
+    other = Image::Difference(other, dither);
     other.Save("output2.jpeg");
 
 #if 0
