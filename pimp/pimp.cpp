@@ -23,7 +23,7 @@ void DoSomeSeriousShit(Image &image)
     ivec2 size = other.GetSize();
 
     /* Perform some per-pixel operations */
-    Array2D<u8vec4> &data = other.Lock2D<PixelFormat::RGBA_8>();
+    array2d<u8vec4> &data = other.Lock2D<PixelFormat::RGBA_8>();
     for (int y = 0; y < size.y; ++y)
     for (int x = 0; x < size.x; ++x)
     {
@@ -88,7 +88,7 @@ void DoSomeSeriousShit(Image &image)
     /* More tests */
     Image tmp;
     tmp.RenderRandom(ivec2(320, 320));
-    Array2D<float> ker = Image::GaussianKernel(vec2(3.f));
+    array2d<float> ker = Image::GaussianKernel(vec2(3.f));
     float mymax = 0.0f;
     for (int j = 0; j < ker.GetSize().y; ++j)
         for (int i = 0; i < ker.GetSize().x; ++i)
