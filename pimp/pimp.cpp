@@ -53,9 +53,9 @@ void DoSomeSeriousShit(Image &image)
     //other = other.DitherHalftone(20.f, lol::radians(22.f));
     //other = other.Convolution(Image::GaussianKernel(vec2(1.f)));
     //other = other.Resize(ivec2(256, 320), ResampleAlgorithm::Bicubic);
-    other = other.Resize(ivec2(320, 400), ResampleAlgorithm::Bresenham);
+    //other = other.Resize(ivec2(320, 400), ResampleAlgorithm::Bresenham);
     //other = other.DitherOrdered(Image::BayerKernel(ivec2(32, 32)));
-    other = other.DitherOrdered(Image::BlueNoiseKernel(ivec2(47, 52)));
+    other = other.DitherOrdered(Image::BlueNoiseKernel(ivec2(147, 212)));
     //other = other.DitherDbs();
     //other = Image::Difference(other, dither);
     other.Save("output2.jpeg");
