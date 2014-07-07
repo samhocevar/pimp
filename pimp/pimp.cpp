@@ -16,97 +16,259 @@
 
 using namespace lol;
 
-void DoSomeSeriousShit(Image &image)
+
+Image EHBConvert(Image src)
 {
-    /* Copy image to another variable */
-    Image other = image;
-    ivec2 size = other.GetSize();
+    int const COLORS = 32;
+    int const RECYCLED_COLORS = 16;
+    int const FIXED_COLORS = 12;
 
-    /* Perform some per-pixel operations */
-    array2d<u8vec4> &data = other.Lock2D<PixelFormat::RGBA_8>();
+    static_assert(RECYCLED_COLORS + FIXED_COLORS < COLORS, "no free colors!");
+
+    /* Build the Amiga colour palette */
+    array<vec3> hipal, lopal;
+    for (int n = 0; n < 4096; ++n)
+    {
+        ivec3 col = ivec3(n % 16, (n / 16) % 16, (n / 256) % 16);
+        hipal.Push(vec3(col) / 15.f);
+        lopal.Push(vec3(col / 2) / 15.f);
+    }
+
+    ivec2 size = src.GetSize();
+    Image dst(size);
+
+    array2d<vec4> &srcdata = src.Lock2D<PixelFormat::RGBA_F32>();
+
+#if 1
+    /* Convert source image to Amiga colours */
     for (int y = 0; y < size.y; ++y)
-    for (int x = 0; x < size.x; ++x)
-    {
-        /* Reduce red value */
-        data[x][y].r *= 0.9f;
-    }
-    other.Unlock2D(data);
-
-    /* Convert to YUV and back to RGB */
-    other = other.RGBToYUV();
-    other = other.Convolution(Image::GaussianKernel(vec2(2.f)));
-    other = other.YUVToRGB();
-
-    /* Filter */
-    //other = other.Convolution(Image::HalftoneKernel(ivec2(2, 2)));
-    //other = other.Convolution(Image::GaussianKernel(vec2(6.f, 0.5f)));
-    //other = other.Median(ivec2(4, 4));
-    //other = other.Brightness(0.5f);
-    //other = other.Threshold(0.3f);
-    //other = other.Erode().Erode().Erode().Erode();
-    //other = other.Sharpen(Image::GaussianKernel(vec2(6.f, 0.5f)));
-    other.Save("output1.jpeg");
-
-    /* Dither to black and white */
-    //other = other.DitherOstromoukhov(ScanMode::Serpentine);
-    //other = other.DitherEdiff(Image::EdiffKernel(EdiffAlgorithm::Stucki), ScanMode::Serpentine);
-    //other = other.DitherHalftone(20.f, lol::radians(22.f));
-    //other = other.Convolution(Image::GaussianKernel(vec2(1.f)));
-    //other = other.Resize(ivec2(256, 320), ResampleAlgorithm::Bicubic);
-    //other = other.Resize(ivec2(320, 400), ResampleAlgorithm::Bresenham);
-    //other = other.DitherOrdered(Image::BayerKernel(ivec2(32, 32)));
-    other = other.DitherOrdered(Image::BlueNoiseKernel(ivec2(147, 212)));
-    //other = other.DitherDbs();
-    //other = Image::Difference(other, dither);
-    other.Save("output2.jpeg");
-
-#if 0
-    /* Convert to braille! */
-    {
-        float *pixels = other.Lock<PixelFormat::Y_F32>();
-        for (int y = 0; y < size.y; y += 4)
+        for (int x = 0; x < size.x; ++x)
         {
-            for (int x = 0; x < size.x; x += 2)
-            {
-                int ch = 0;
-                ch += (int)(pixels[y * size.x + x] < 0.5f) << 0;
-                ch += (int)(pixels[(y + 1) * size.x + x] < 0.5f) << 1;
-                ch += (int)(pixels[(y + 2) * size.x + x] < 0.5f) << 2;
-                ch += (int)(pixels[y * size.x + x + 1] < 0.5f) << 3;
-                ch += (int)(pixels[(y + 1) * size.x + x + 1] < 0.5f) << 4;
-                ch += (int)(pixels[(y + 2) * size.x + x + 1] < 0.5f) << 5;
-                ch += (int)(pixels[(y + 3) * size.x + x] < 0.5f) << 6;
-                ch += (int)(pixels[(y + 3) * size.x + x + 1] < 0.5f) << 7;
-                printf("%c%c%c", 0xe2, 0xa0 + (ch >> 6), 0x80 + (ch & 0x3f));
-            }
-            printf("\n");
+            ivec3 p = ivec3(srcdata[x][y].rgb * 15.999f);
+            srcdata[x][y] = vec4(hipal[p.r + p.g * 16 + p.b * 256], 1.f);
         }
-        other.Unlock(pixels);
-    }
 #endif
 
-    /* More tests */
-    Image tmp;
-    tmp.RenderRandom(ivec2(320, 320));
-    array2d<float> ker = Image::GaussianKernel(vec2(3.f));
-    float mymax = 0.0f;
-    for (int j = 0; j < ker.GetSize().y; ++j)
-        for (int i = 0; i < ker.GetSize().x; ++i)
-            mymax = lol::max(ker[i][j], mymax);
-    for (int j = 0; j < ker.GetSize().y; ++j)
-        for (int i = 0; i < ker.GetSize().x; ++i)
-            ker[i][j] = ker[i][j] > mymax / 8.0f ? 1.f : 0.f;
-    tmp = tmp.Median(ker);
-    //tmp = tmp.Median(Image::GaussianKernel(vec2(6.f)));
-    //tmp = tmp.Median(Image::HalftoneKernel(ivec2(16, 16)));
-    tmp = tmp.AutoContrast();
-    tmp.Save("output3.jpeg");
+    array<int> prev_line_palette;
+    prev_line_palette.Resize(COLORS);
 
-    /* Test Oric support */
-    tmp = tmp.Contrast(0.5f);
-    tmp.Save("oric.tap");
-    tmp.Load("oric.tap");
-    tmp.Save("oric.png");
+    /* Treat our image, line by line. */
+    for (int y = 0; y < size.y; ++y)
+    {
+        array<int> super_palette;
+        float super_msd = (float)size.x;
+
+        /* Make a histogram of the line */
+        int histo[4096] = { 0 };
+        for (int x = 0; x < size.x; ++x)
+        {
+            ivec3 p = ivec3(srcdata[x][y].rgb * 15.999f);
+
+            /* Find desired color index. If the color is dark, pretend
+             * we actually want a lighter version so we can take
+             * advantage of EHB. */
+            int index = p.r + p.g * 16 + p.b * 256;
+            if (p < ivec3(8))
+                index *= 2;
+
+            ++histo[index];
+
+            /* Count colours from adjacent lines, but only if they appear
+             * in the current line. This tells us which colours are a bit
+             * more important than the others. */
+            for (int dy : { -3, -2, -1, 0, 1, 2, 3 })
+            for (int dx : { -3, -2, -1, 0, 1, 2, 3 })
+            {
+                if (y + dy < 0 || y + dy >= size.y
+                     || x + dx < 0 || x + dx >= size.x)
+                    continue;
+
+                ivec3 q = ivec3(vec3(srcdata[x + dx][y + dy].rgb) * 15.999f);
+                if (p == q)
+                    ++histo[index];
+            }
+        }
+
+        /* Count number of colours in this line */
+        int count = 0;
+        for (int i = 0; i < 4096; ++i)
+            count += histo[i] ? 1 : 0;
+
+        printf("line %d: %d colors\n", y, count);
+
+        /* Sort palette */
+        array<int> sorted_palette;
+        for (int n = 0; n < count; ++n)
+        {
+            int best = -1;
+            for (int i = 0; i < 4096; ++i)
+                if ((best == -1 || histo[i] >= histo[best])
+                    && sorted_palette.Find(i) == -1)
+                    best = i;
+            sorted_palette << best;
+        }
+
+        /* Recycle up to RECYCLED_COLORS from last line */
+        array<int> recycled_palette;
+        for (auto c : sorted_palette)
+        {
+            if (recycled_palette.Count() >= RECYCLED_COLORS)
+                break;
+            if (prev_line_palette.Find(c) == -1)
+                continue;
+            recycled_palette << c;
+        }
+
+        /* Pad recycled palette with stuff from prev line. */
+        for (auto c : prev_line_palette)
+        {
+            if (recycled_palette.Count() >= RECYCLED_COLORS)
+                break;
+            if (recycled_palette.Find(c) != -1)
+                continue;
+            recycled_palette << c;
+        }
+
+        /* Fix FIXED_COLORS colors for this line */
+        array<int> fixed_palette;
+        for (auto c : sorted_palette)
+        {
+            if (fixed_palette.Count() >= FIXED_COLORS)
+                break;
+            if (recycled_palette.Find(c) != -1)
+                continue;
+            recycled_palette << c;
+        }
+
+#if 0
+        printf("recycled palette:");
+        for (auto color : recycled_palette)
+            printf(" %03x(%d)", color, histo[color]);
+        printf("\n");
+#endif
+
+        for (int iter = 0; iter < 50; ++iter)
+        {
+            array<int> palette = recycled_palette + fixed_palette;
+            palette.Resize(COLORS);
+
+            /* Generate random palette */
+            for (int c = RECYCLED_COLORS + FIXED_COLORS; c < COLORS; ++c)
+                palette[c] = rand(4096);
+
+            float best_msd = (float)size.x;
+            int changed_index = 0;
+            int changed_color = palette[0];
+
+            for (int failures = 0; failures < 50; )
+            {
+                /* Dither one line */
+                float msd = 0.0f;
+                for (int x = 0; x < size.x; ++x)
+                {
+                    vec3 pixel = srcdata[x][y].rgb;
+                    float dist_squared = 1.0f;
+
+                    for (int c = 0; c < COLORS; ++c)
+                    {
+                        dist_squared = min(dist_squared,
+                                           sqlength(hipal[palette[c]] - pixel));
+                        dist_squared = min(dist_squared, /* EHB */
+                                           sqlength(lopal[palette[c]] - pixel));
+                    }
+
+                    if (dist_squared < 0.5f / (16 * 16))
+                        dist_squared = 0.f;
+                    msd += dist_squared;
+                }
+
+                if (msd >= best_msd)
+                {
+                    /* If the result wasn't good, revert. */
+                    ++failures;
+
+                    palette[changed_index] = changed_color;
+                }
+                else
+                {
+                    failures = 0;
+
+                    /* Otherwise, commit */
+                    best_msd = msd;
+                }
+
+                /* Change one color */
+                changed_index = rand(RECYCLED_COLORS + FIXED_COLORS, COLORS);
+                changed_color = palette[changed_index];
+                int new_color = changed_color;
+                new_color += rand(-1, 2);
+                new_color += rand(-1, 2) * 16;
+                new_color += rand(-1, 2) * 256;
+                palette[changed_index] = clamp(new_color, 0, 4095);
+
+                if (best_msd > 5.f * super_msd)
+                    break;
+            }
+
+            if (best_msd < super_msd)
+            {
+                super_msd = best_msd;
+                super_palette = palette;
+                printf("[%d] .. %f\n", y, best_msd);
+            }
+        }
+
+        /* Commit the best palette */
+        array2d<vec4> &dstdata = dst.Lock2D<PixelFormat::RGBA_F32>();
+
+        for (int x = 0; x < size.x; ++x)
+        {
+            vec3 pixel = srcdata[x][y].rgb;
+            float best_dist = 1.0f;
+            vec3 best_error(0.0f);
+
+            for (int c = 0; c < COLORS * 2 /* EHB */; ++c)
+            {
+                vec3 color = c < COLORS ? hipal[super_palette[c]]
+                                        : lopal[super_palette[c - COLORS]];
+                float dist = sqlength(pixel - color);
+                if (dist < best_dist)
+                {
+                     best_dist = dist;
+                     best_error = pixel - color;
+                     dstdata[x][y] = vec4(color, 1.f);
+                }
+            }
+
+#if 0 /* Propagate error */
+            if (x + 1 < size.x)
+                srcdata[x + 1][y] = saturate(srcdata[x + 1][y]
+                                            + 0.4375f * vec4(best_error, 0.f));
+            if (y + 1 < size.y)
+            {
+                if (x - 1 >= 0)
+                    srcdata[x - 1][y + 1] = saturate(srcdata[x - 1][y + 1]
+                                            + 0.1875f * vec4(best_error, 0.f));
+                srcdata[x][y + 1] = saturate(srcdata[x][y + 1]
+                                            + 0.3125f * vec4(best_error, 0.f));
+                if (x + 1 < size.x)
+                    srcdata[x + 1][y + 1] = saturate(srcdata[x + 1][y + 1]
+                                            + 0.0625f * vec4(best_error, 0.f));
+            }
+#endif
+        }
+
+        dst.Unlock2D(dstdata);
+
+        if (y % 10 == 9)
+            dst.Save("ehb.png");
+
+        printf("[%d] FINAL %f\n", y, super_msd);
+    }
+
+    src.Unlock2D(srcdata);
+
+    return dst;
 }
 
 int main(int argc, char **argv)
@@ -114,9 +276,9 @@ int main(int argc, char **argv)
     UNUSED(argc, argv);
 
     Image image;
-    image.Load("input.jpeg");
-
-    DoSomeSeriousShit(image);
+    image.Load("4bitfaces.png");
+    image = EHBConvert(image);
+    image.Save("ehb.png");
 
     return 0;
 }
