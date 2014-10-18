@@ -285,6 +285,7 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
+#if 0
     array<Image *> imlist;
     for (int i = 0; i < 10; ++i)
     {
@@ -293,8 +294,9 @@ int main(int argc, char **argv)
     }
 
     Image::Save(imlist, "lol.gif");
+#endif
 
-#if 0
+#if 1
     Image image;
     image.Load("4bitfaces.png");
     image = EHBConvert(image);
