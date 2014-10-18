@@ -285,18 +285,18 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
-#if 0
-    array<Image *> imlist;
-    for (int i = 0; i < 10; ++i)
     {
-        imlist.Push(new Image());
-        imlist.Last()->RenderRandom(ivec2(128, 128));
+        Movie m("lol.gif", ivec2(128, 128), 10);
+
+        for (int i = 0; i < 10; ++i)
+        {
+            Image im;
+            im.RenderRandom(ivec2(128, 128));
+            m.Feed(im);
+        }
     }
 
-    Image::Save(imlist, "lol.gif");
-#endif
-
-#if 1
+#if 0
     Image image;
     image.Load("4bitfaces.png");
     image = EHBConvert(image);
