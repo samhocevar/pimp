@@ -308,6 +308,8 @@ int main(int argc, char **argv)
         for (int j = 0; j < size.y; ++j)
             for (int i = 0; i < size.x; ++i)
                 delta += sqlength(im1data[i][j].rgb - im2data[i][j].rgb);
+        im1.Unlock2D(im1data);
+        im2.Unlock2D(im2data);
 
         printf("mean distance = %f\n", sqrt(delta / (size.x * size.y)));
     }
