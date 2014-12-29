@@ -231,7 +231,7 @@ Image EHBConvert(Image src)
 
         array<int> palette = recycled_palette + fixed_palette + free_palette;
         ASSERT(palette.Count() == COLORS,
-               "only %d colours in palette", palette.Count());
+               "only %d colours in palette", (int)palette.Count());
 
         /* Commit the best palette */
         array2d<vec4> &dstdata = dst.Lock2D<PixelFormat::RGBA_F32>();
@@ -285,6 +285,34 @@ int main(int argc, char **argv)
 {
     UNUSED(argc, argv);
 
+    if (argc >= 3)
+    {
+        /* Load images */
+        Image im1, im2;
+        im1.Load(argv[1]);
+        im2.Load(argv[2]);
+        ivec2 size = im1.GetSize();
+
+        /* Ensure the size is the same */
+        if (im2.GetSize() != size)
+            im2 = im2.Resize(size, ResampleAlgorithm::Bicubic);
+
+        /* Gaussian Blur */
+        im1 = im1.Convolution(Image::GaussianKernel(vec2(2.f)));
+        im2 = im2.Convolution(Image::GaussianKernel(vec2(2.f)));
+
+        /* Count pixel differences */
+        float delta = 0.f;
+        array2d<vec4> &im1data = im1.Lock2D<PixelFormat::RGBA_F32>();
+        array2d<vec4> &im2data = im2.Lock2D<PixelFormat::RGBA_F32>();
+        for (int j = 0; j < size.y; ++j)
+            for (int i = 0; i < size.x; ++i)
+                delta += sqlength(im1data[i][j].rgb - im2data[i][j].rgb);
+
+        printf("mean distance = %f\n", sqrt(delta / (size.x * size.y)));
+    }
+
+#if 0
     {
         Movie m("lol.gif", ivec2(128, 128), 10);
 
@@ -295,6 +323,7 @@ int main(int argc, char **argv)
             m.Feed(im);
         }
     }
+#endif
 
 #if 0
     Image image;
