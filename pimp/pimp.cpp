@@ -35,14 +35,14 @@ Image EHBConvert(Image src)
     for (int n = 0; n < 4096; ++n)
     {
         ivec3 col = ivec3(n % 16, (n / 16) % 16, (n / 256) % 16);
-        hipal.Push(vec3(col) / 15.f);
-        lopal.Push(vec3(col / 2) / 15.f);
+        hipal.push(vec3(col) / 15.f);
+        lopal.push(vec3(col / 2) / 15.f);
     }
 
     /* Build clusters of pixels so that we know which colours are
      * important or not. */
     array2d<int> pixelcount(size);
-    memset(pixelcount.Data(), 0, pixelcount.Bytes());
+    memset(pixelcount.data(), 0, pixelcount.bytes());
     for (int y = 0; y < size.y; ++y)
         for (int x = 0; x < size.x; ++x)
         {
@@ -51,17 +51,17 @@ Image EHBConvert(Image src)
             ivec3 p = ivec3(srcdata[x][y].rgb * 255.999f);
 
             array<ivec2> visited, unvisited;
-            unvisited.Push(ivec2(x, y));
+            unvisited.push(ivec2(x, y));
 
-            while (unvisited.Count())
+            while (unvisited.count())
             {
-                ivec2 m = unvisited.Pop();
-                visited.Push(m);
+                ivec2 m = unvisited.pop();
+                visited.push(m);
 
                 for (ivec2 d : { ivec2(-1, 0), ivec2(1, 0),
                                  ivec2(0, -1), ivec2(0, 1) })
                 {
-                    if (visited.Find(m + d) != -1)
+                    if (visited.find(m + d) != -1)
                         continue;
                     if (m.x + d.x < 0 || m.x + d.x >= size.x
                          || m.y + d.y < 0 || m.y + d.y >= size.y)
@@ -69,12 +69,12 @@ Image EHBConvert(Image src)
 
                     ivec3 q = ivec3(srcdata[m.x + d.x][m.y + d.y].rgb * 255.999f);
                     if (p == q)
-                        unvisited.Push(m + d);
+                        unvisited.push(m + d);
                 }
             }
 
             for (ivec2 coord : visited)
-                pixelcount[coord] = visited.Count();
+                pixelcount[coord] = visited.count();
         }
 
 #if 1
@@ -89,7 +89,7 @@ Image EHBConvert(Image src)
 #endif
 
     array<int> prev_line_palette;
-    prev_line_palette.Resize(COLORS);
+    prev_line_palette.resize(COLORS);
 
     /* Treat our image, line by line. */
     for (int y = 0; y < size.y; ++y)
@@ -126,59 +126,59 @@ Image EHBConvert(Image src)
             int best = -1;
             for (int i = 0; i < 4096; ++i)
                 if ((best == -1 || histo[i] >= histo[best])
-                    && sorted_palette.Find(i) == -1)
+                    && sorted_palette.find(i) == -1)
                     best = i;
             sorted_palette << best;
         }
 
         /* Recycle up to RECYCLED_COLORS from last line */
         array<int> recycled_palette;
-        for (int i = 0; i < sorted_palette.Count(); )
+        for (int i = 0; i < sorted_palette.count(); )
         {
-            if (recycled_palette.Count() >= RECYCLED_COLORS)
+            if (recycled_palette.count() >= RECYCLED_COLORS)
                 break;
-            if (prev_line_palette.Find(sorted_palette[i]) == -1)
+            if (prev_line_palette.find(sorted_palette[i]) == -1)
             {
                 ++i;
             }
             else
             {
                 recycled_palette << sorted_palette[i];
-                sorted_palette.Remove(i);
+                sorted_palette.remove(i);
             }
         }
 
         /* Pad recycled palette. */
-        while (recycled_palette.Count() < RECYCLED_COLORS)
+        while (recycled_palette.count() < RECYCLED_COLORS)
         {
-            if (prev_line_palette.Count())
-                recycled_palette.PushUnique(prev_line_palette.Pop());
+            if (prev_line_palette.count())
+                recycled_palette.push_unique(prev_line_palette.pop());
             else
-                recycled_palette.PushUnique(rand(4096));
+                recycled_palette.push_unique(rand(4096));
         }
 
         /* Fix up to FIXED_COLORS colors for this line. We just pick
          * the most important ones from sorted_palette. */
         array<int> fixed_palette;
-        while (sorted_palette.Count()
-                && fixed_palette.Count() < FIXED_COLORS)
+        while (sorted_palette.count()
+                && fixed_palette.count() < FIXED_COLORS)
         {
-            fixed_palette.PushUnique(sorted_palette[0]);
-            sorted_palette.Remove(0);
+            fixed_palette.push_unique(sorted_palette[0]);
+            sorted_palette.remove(0);
         }
 
-        while (fixed_palette.Count() < FIXED_COLORS)
-            fixed_palette.PushUnique(rand(4096));
+        while (fixed_palette.count() < FIXED_COLORS)
+            fixed_palette.push_unique(rand(4096));
 
         /* The rest are free colours; if we have enough room for the
          * last colours we need, use these. Otherwise, we need to
          * search for the best combination. */
         array<int> free_palette;
-        if (sorted_palette.Count() <= FREE_COLORS)
+        if (sorted_palette.count() <= FREE_COLORS)
         {
             free_palette += sorted_palette;
-            while (free_palette.Count() < FREE_COLORS)
-                free_palette.PushUnique(rand(4096));
+            while (free_palette.count() < FREE_COLORS)
+                free_palette.push_unique(rand(4096));
         }
         else
         {
@@ -188,10 +188,10 @@ Image EHBConvert(Image src)
             {
                 /* Pick FREE_COLORS colours at random */
                 array<int> test_palette;
-                while (test_palette.Count() < FREE_COLORS)
+                while (test_palette.count() < FREE_COLORS)
                 {
-                    int index = rand(sorted_palette.Count());
-                    test_palette.PushUnique(sorted_palette[index]);
+                    int index = rand(sorted_palette.count());
+                    test_palette.push_unique(sorted_palette[index]);
                 }
 
                 array<int> palette = recycled_palette
@@ -230,8 +230,8 @@ Image EHBConvert(Image src)
 #endif
 
         array<int> palette = recycled_palette + fixed_palette + free_palette;
-        ASSERT(palette.Count() == COLORS,
-               "only %d colours in palette", (int)palette.Count());
+        ASSERT(palette.count() == COLORS,
+               "only %d colours in palette", (int)palette.count());
 
         /* Commit the best palette */
         array2d<vec4> &dstdata = dst.Lock2D<PixelFormat::RGBA_F32>();
