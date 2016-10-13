@@ -18,9 +18,11 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 AC_LIBTOOL_CXX
 
+AC_CONFIG_HEADER(config.h)
+
 AC_CONFIG_FILES(
  [Makefile
-  pimp/Makefile
+  src/Makefile
 ])
 
 dnl
